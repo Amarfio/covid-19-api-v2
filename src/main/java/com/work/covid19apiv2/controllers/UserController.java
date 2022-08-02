@@ -46,17 +46,17 @@ public class UserController {
         return userService.createUser(user);
     }
 
-    @Operation(summary="User Login details", description = "Login user with these details")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User login Successfully",
-                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = User.class))}),
-            @ApiResponse(responseCode = "404", description = "User login not successful",
-                    content = @Content)})
-    @GetMapping("/user/login")
-    public ResponseEntity<String> userLogin (@RequestParam String email, @RequestBody String password) throws InterruptedException, ExecutionException {
-//        return userService.createUser(user);
-        return ResponseEntity.ok(email + " and the password: "+ password) ;
-    }
+//    @Operation(summary="User Login details", description = "Login user with these details")
+//    @ApiResponses(value = {
+//            @ApiResponse(responseCode = "200", description = "User login Successfully",
+//                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = User.class))}),
+//            @ApiResponse(responseCode = "404", description = "User login not successful",
+//                    content = @Content)})
+//    @GetMapping("/user/login")
+//    public ResponseEntity<String> userLogin (@RequestParam String email, @RequestBody String password) throws InterruptedException, ExecutionException {
+////        return userService.createUser(user);
+//        return ResponseEntity.ok(email + " and the password: "+ password) ;
+//    }
 
     //add user details by document id: change to use only email to get user details
     @Operation(summary="Get user details using the id", description = "Get User Details using the document id")
