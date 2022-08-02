@@ -59,15 +59,15 @@ public class UserController {
 //    }
 
     //add user details by document id: change to use only email to get user details
-    @Operation(summary="Get user details using the id", description = "Get User Details using the document id")
+    @Operation(summary="Get user details using email", description = "Get User Details using user's email")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User found",
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = User.class))}),
             @ApiResponse(responseCode = "404", description = "User not found",
                     content = @Content)})
     @GetMapping("/user/get-user-details")
-    public User getUser(@RequestParam String documentId) throws InterruptedException, ExecutionException {
-        return userService.getUser(documentId);
+    public User getUser(@RequestParam String email) throws InterruptedException, ExecutionException {
+        return userService.getUser(email);
     }
 
     //get list of users and details in the system
