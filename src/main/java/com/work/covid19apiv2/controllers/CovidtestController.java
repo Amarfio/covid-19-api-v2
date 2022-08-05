@@ -11,9 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -49,5 +47,60 @@ public class CovidtestController {
     }
 
 
+    @Operation(summary="Add covid test", description = "Add a new covid test")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Test added successfully",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = Covidtest.class))}),
+            @ApiResponse(responseCode = "404", description = "Test was not added successfully",
+                    content = @Content)})
+    @PostMapping("/covidtests/add-new-covidtest")
+    //method to get temperature and email to determine covid state of user
+    public String createTest(@RequestBody Covidtest covidtest) throws InterruptedException, ExecutionException {
+        String userEmail = covidtest.getEmail();
+        covidtest.setEmail(userEmail);
+
+        covidtest.setCovidresult(covidResult(covidtest.getTemperature()));
+
+        //code to get user name by using the email entered from the users table
+        String username = covidTestService.getUsername(userEmail);
+
+        sendCovidTestEmail(userEmail, username,covidtest.getCovidresult(), "Have a great day");
+        return covidTestService.createCovidTest(covidtest);
+    }
+
+    //method for creating email content for users
+    public void sendCovidTestEmail(String toEmail, String userFirstName, String process, String goodWish){
+
+        //commented for debugging purposes
+        // toEmail = "joshuaamarfio1@gmail.com";
+
+        //subject of the email
+        String subject="Covid Test Update";
+
+        //stuff for check in
+        //user name, time of check in and process
+
+        //message of the email
+        String body = "Hello " +userFirstName+", "+
+                //end the line
+                "\nYour covid test result indicates that "+process+
+                //end the line
+                "\n\n"
+                +goodWish+"!!!";
+
+        senderService.sendEmail(toEmail, subject, body);
+    }
+
+    private String covidResult(double temperature) {
+        while (temperature > 39) {
+
+            if (temperature >= 40) {
+                return "A Suspected COVID Case";
+            }
+
+        }
+
+        return "Normal Temperature";
+    }
 
 }
