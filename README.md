@@ -13,6 +13,8 @@ NOTE: The localhost:8080 is subject to change base your port configuration
 ## CODE IN ACTION ENGLISH
 ![LANDING PAGE](/codeImages/landingPage.png)
 
+![LANDING PAGE](/codeImages/landingPageCont'd.png)
+
 ![STORE USER ENDPOINT](/codeImages/storePage.png)
 
 ![STORE USER ENDPOINT CONT'D](/codeImages/storePageCont'd.png)
