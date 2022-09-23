@@ -21,6 +21,9 @@ import java.util.concurrent.ExecutionException;
 @Service
 public class CovidTestService {
 
+    //variable to store the number of records
+    public int numberOfRecords = 0;
+
     //method to get all tests done so far
     public List<Covidtest> getAllTests() throws ExecutionException, InterruptedException {
         Firestore dbFirestore = FirestoreClient.getFirestore();
@@ -78,5 +81,32 @@ public class CovidTestService {
         }
 
         return "user name not found";
+    }
+
+    //method to get the number of records in the database
+    public int countRecords() throws Exception{
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+
+        Iterable<DocumentReference> documentReference = dbFirestore.collection("covidtests").listDocuments();
+        Iterator<DocumentReference> iterator = documentReference.iterator();
+
+        List<Covidtest> covidtestList = new ArrayList<>();
+        Covidtest covidtest = null;
+
+        int count = 0;
+
+        while(iterator.hasNext()){
+
+            DocumentReference documentReference1 = iterator.next();
+            ApiFuture<DocumentSnapshot> future = documentReference1.get();
+            DocumentSnapshot document = future.get();
+
+            covidtest = document.toObject(Covidtest.class);
+            numberOfRecords++;
+            covidtestList.add(covidtest);
+
+        }
+
+        return count;
     }
 }

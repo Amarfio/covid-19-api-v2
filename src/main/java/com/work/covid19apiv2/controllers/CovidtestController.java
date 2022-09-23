@@ -42,7 +42,8 @@ public class CovidtestController {
             @ApiResponse(responseCode = "404", description = "Tests not found",
                     content = @Content)})
     @GetMapping("/covidtests/get-all-tests")
-    public List<Covidtest> getAllCovidTests() throws ExecutionException, InterruptedException {
+    public List<Covidtest> getAllCovidTests() throws ExecutionException, InterruptedException,Exception {
+        int number  = getNumberOfRecords();
         return covidTestService.getAllTests();
     }
 
@@ -101,6 +102,12 @@ public class CovidtestController {
         }
 
         return "Normal Temperature";
+    }
+
+    public int getNumberOfRecords() throws  Exception{
+
+        System.out.println("the number of records is "+ covidTestService.countRecords());
+        return covidTestService.countRecords();
     }
 
 }
