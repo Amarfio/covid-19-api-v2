@@ -80,11 +80,23 @@ public class UserService {
     public String updateUser(User user) throws ExecutionException, InterruptedException {
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
+        String email = user.getEmail();
+        //get user details using the email from the database
+        DocumentReference documentReference =dbFirestore.collection("users").document(email);
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+        DocumentSnapshot document = future.get();
+
+        //retain user's created date value
+        User userAlready = document.toObject(User.class);
+
+        user.setCreated_date(userAlready.getCreated_date());
+
         //set date and time the record was updated
         LocalDateTime created_at = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
         String date = created_at.format(formatter).toString();
         user.setUpdated_date(date);
+
         ApiFuture<WriteResult> collectionsApiFuture = dbFirestore.collection("users").document(user.getEmail()).set(user);
         return collectionsApiFuture.get().getUpdateTime().toString();
     }
