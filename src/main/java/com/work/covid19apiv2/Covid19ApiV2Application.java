@@ -20,7 +20,7 @@ public class Covid19ApiV2Application {
 	public static void main(String[] args) throws IOException {
 
 		//Service account settings for the firebase database
-		FileInputStream serviceAccount = new FileInputStream("./src/main/resources/serviceAccountKey.json");
+		FileInputStream serviceAccount = new FileInputStream("./src/main/resources/covid-db-41994-firebase-adminsdk-dcurz-3b971f1715.json");
 
 		FirebaseOptions options = new FirebaseOptions.Builder()
 				.setCredentials(GoogleCredentials.fromStream(serviceAccount))
