@@ -6,7 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Covidtest {
-
+    String test_id;
     String email;
     double temperature;
     String covidresult;

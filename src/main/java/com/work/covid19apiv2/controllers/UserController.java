@@ -1,7 +1,14 @@
 package com.work.covid19apiv2.controllers;
 
+import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.Firestore;
+import com.google.firebase.cloud.FirestoreClient;
 import com.work.covid19apiv2.EmailSenderService;
+import com.work.covid19apiv2.model.Log;
 import com.work.covid19apiv2.model.User;
+import com.work.covid19apiv2.service.LogService;
 import com.work.covid19apiv2.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -12,6 +19,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.InetAddress;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -27,10 +39,18 @@ public class UserController {
     @Autowired
     EmailSenderService senderService;
 
+    public Log logActivity;
+
+    //store all logs made
+    @Autowired
+    LogService logService;
+
 
     public UserController(UserService userService){
         this.userService = userService;
     }
+
+
 
     //add new user
     @Operation(summary="Sign Up user", description = "Adds a new user to the app")
@@ -40,9 +60,19 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not successfully added",
                     content = @Content)})
     @PostMapping("/user/sign-up")
-    public String createUser(@RequestBody User user) throws InterruptedException, ExecutionException {
+    public ResponseEntity<?> createUser(@RequestBody User user) throws InterruptedException, ExecutionException {
 
         sendNewUserEmail(user.getEmail(), user.getName(), "Have a great day");
+        //set date and time the record was created
+        LocalDateTime created_at = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String date = created_at.format(formatter).toString();
+
+        String[] getDeviceDetails = getDeviceAndIp();
+        String logId = generateLogId();
+
+        logActivity = new Log(logId,"sign up, added new user","successful", getDeviceDetails[0], getDeviceDetails[1], date);
+        logService.createLog(logActivity);
         return userService.createUser(user);
     }
 
@@ -63,10 +93,20 @@ public class UserController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User found",
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = User.class))}),
-            @ApiResponse(responseCode = "404", description = "User not found",
+            @ApiResponse(responseCode = "404", description = "no data found",
                     content = @Content)})
     @GetMapping("/user/get-user-details")
-    public User getUser(@RequestParam String email) throws InterruptedException, ExecutionException {
+    public ResponseEntity<?> getUser(@RequestParam String email){
+        //set date and time the record was created
+        LocalDateTime created_at = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String date = created_at.format(formatter).toString();
+
+        String[] getDeviceDetails = getDeviceAndIp();
+        String logId = generateLogId();
+
+        logActivity = new Log(logId,"get user details","successful", getDeviceDetails[0], getDeviceDetails[1], date);
+        logService.createLog(logActivity);
         return userService.getUser(email);
     }
 
@@ -78,7 +118,17 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "No user add yet",
                     content = @Content)})
     @GetMapping("/user/get-all-users")
-    public List<User> getUsers() throws ExecutionException, InterruptedException{
+    public ResponseEntity<?> getUsers(){
+        //set date and time the record was created
+        LocalDateTime created_at = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String date = created_at.format(formatter).toString();
+
+        String[] getDeviceDetails = getDeviceAndIp();
+        String logId = generateLogId();
+        logActivity = new Log(logId,"get user details","successful", getDeviceDetails[0], getDeviceDetails[1], date);
+        logService.createLog(logActivity);
+
         return userService.getAllUsers();
     }
     //update user details
@@ -89,7 +139,18 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Update not successful",
                     content = @Content)})
     @PutMapping("/user/update-user-details")
-    public String updateUser(@RequestBody User user) throws InterruptedException, ExecutionException{
+    public ResponseEntity<?> updateUser(@RequestBody User user) {
+
+        //set date and time the record was created
+        LocalDateTime created_at = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String date = created_at.format(formatter).toString();
+
+        String[] getDeviceDetails = getDeviceAndIp();
+        String logId = generateLogId();
+        logActivity = new Log(logId,"updated user details","successful", getDeviceDetails[0], getDeviceDetails[1], date);
+        logService.createLog(logActivity);
+
         return userService.updateUser(user);
     }
 
@@ -101,7 +162,17 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found",
                     content = @Content)})
     @DeleteMapping("/user/delete")
-    public String deleteUser(@RequestParam String email){
+    public ResponseEntity<?> deleteUser(@RequestParam String email){
+        //set date and time the record was created
+        LocalDateTime created_at = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String date = created_at.format(formatter).toString();
+
+        String[] getDeviceDetails = getDeviceAndIp();
+        String logId = generateLogId();
+        logActivity = new Log(logId,"user details deleted by email","successful", getDeviceDetails[0], getDeviceDetails[1], date);
+        logService.createLog(logActivity);
+
         return userService.deleteUser(email);
     }
 
@@ -140,4 +211,60 @@ public class UserController {
 
         senderService.sendEmail(toEmail, subject, body);
     }
+
+    public String[] getDeviceAndIp(){
+        String[] result = new String[2];
+        try{
+            InetAddress ip = InetAddress.getLocalHost();
+            String ipAddress = ip.getHostAddress();
+            String device = ip.getHostName();
+
+            result[0] = device;
+            result[1] = ipAddress;
+        } catch(Exception ex){
+            ex.getMessage();
+        }
+
+        return result;
+
+    }
+
+
+    public String generateLogId(){
+        int recordNumber = 0;
+        try{
+
+            recordNumber = getNoOfRecords() + 1;
+            System.out.println("The new number is "+ recordNumber);
+
+        } catch(Exception ex){
+            ex.getMessage();
+        }
+        return "act_"+recordNumber;
+    }
+
+    public int getNoOfRecords() throws Exception {
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+
+        Iterable<DocumentReference> documentReference = dbFirestore.collection("logs").listDocuments();
+        Iterator<DocumentReference> iterator = documentReference.iterator();
+
+        List<Log> logList = new ArrayList<>();
+        Log logActivity = null;
+
+        int count = 0;
+
+        while(iterator.hasNext()){
+
+            DocumentReference documentReference1 = iterator.next();
+            ApiFuture<DocumentSnapshot> future = documentReference1.get();
+            DocumentSnapshot document = future.get();
+            logActivity = document.toObject(Log.class);
+            count++;
+            logList.add(logActivity);
+        }
+
+        return count;
+    }
+
 }

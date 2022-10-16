@@ -6,8 +6,11 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.WriteResult;
 import com.google.firebase.cloud.FirestoreClient;
+import com.google.protobuf.Api;
+import com.work.covid19apiv2.controllers.ApiResponse;
 import com.work.covid19apiv2.model.Covidtest;
 import com.work.covid19apiv2.model.User;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.swing.text.Document;
@@ -24,89 +27,140 @@ public class CovidTestService {
     //variable to store the number of records
     public int numberOfRecords = 0;
 
+    //create response
+    ApiResponse response;
+
+    //response parameters
+    String statusCode = "200";
+    String message = "data found";
+    Object data = null;
+
     //method to get all tests done so far
-    public List<Covidtest> getAllTests() throws ExecutionException, InterruptedException {
-        Firestore dbFirestore = FirestoreClient.getFirestore();
+    public ResponseEntity<ApiResponse> getAllTests()  {
+        response = new ApiResponse(statusCode, message, data);
 
-        Iterable<DocumentReference> documentReference = dbFirestore.collection("covidtests").listDocuments();
-        Iterator<DocumentReference> iterator = documentReference.iterator();
+        try{
 
-        List<Covidtest> covidtestList = new ArrayList<>();
-        Covidtest covidtest = null;
+            Firestore dbFirestore = FirestoreClient.getFirestore();
 
-        while(iterator.hasNext()){
-            DocumentReference documentReference1 = iterator.next();
-            ApiFuture<DocumentSnapshot> future = documentReference1.get();
-            DocumentSnapshot document = future.get();
+            Iterable<DocumentReference> documentReference = dbFirestore.collection("covidtests").listDocuments();
+            Iterator<DocumentReference> iterator = documentReference.iterator();
 
-            covidtest = document.toObject(Covidtest.class);
-            covidtestList.add(covidtest);
+            List<Covidtest> covidtestList = new ArrayList<>();
+            Covidtest covidtest = null;
+
+            while(iterator.hasNext()){
+                DocumentReference documentReference1 = iterator.next();
+                ApiFuture<DocumentSnapshot> future = documentReference1.get();
+                DocumentSnapshot document = future.get();
+
+                covidtest = document.toObject(Covidtest.class);
+                covidtestList.add(covidtest);
+            }
+
+            if(covidtestList.size() > 0){
+                response = new ApiResponse(statusCode, message,covidtestList);
+            }else{
+                response = new ApiResponse("404", "no data found", data);
+            }
+            return ResponseEntity.ok(response);
+        } catch(Exception ex){
+            response = new ApiResponse("404", ex.getMessage(), data);
+            return ResponseEntity.ok(response);
         }
-
-        return covidtestList;
     }
 
     //method to add new covid test
-    public String createCovidTest(Covidtest covidtest) throws InterruptedException, ExecutionException{
-        //set date and time the record was created
-        LocalDateTime created_at = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
-        String date = created_at.format(formatter).toString();
-        covidtest.setCreated_date(date);
+    public ResponseEntity<ApiResponse> createCovidTest(Covidtest covidtest) {
+        response = new ApiResponse(statusCode, message, data);
+        try{
+
+            //generate a test id
+            covidtest.setTest_id(generateTestId());
+
+            //set date and time the record was created
+            LocalDateTime created_at = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String date = created_at.format(formatter).toString();
+            covidtest.setCreated_date(date);
 
 
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
+            Firestore dbFirestore = FirestoreClient.getFirestore();
 
-        ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection("covidtests").document(covidtest.getEmail()).set(covidtest);
-
-        return "New created created on "+ collectionApiFuture.get().getUpdateTime().toString();
+            ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection("covidtests").document(covidtest.getTest_id()).set(covidtest);
+            response = new ApiResponse(statusCode, "Test added successfully", covidtest);
+            return ResponseEntity.ok(response);
+        }catch(Exception ex){
+            return ResponseEntity.ok(new ApiResponse("400", ex.getMessage(), data));
+        }
+//        return "New created created on "+ collectionApiFuture.get().getUpdateTime().toString();
     }
 
 
 
     //method gets the user name by the specified email entered
-    public String getUsername (String email) throws ExecutionException, InterruptedException {
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-        DocumentReference documentReference =dbFirestore.collection("users").document(email);
-        ApiFuture<DocumentSnapshot> future = documentReference.get();
-        DocumentSnapshot document = future.get();
+    public String getUsername (String email) {
+        try{
+            Firestore dbFirestore = FirestoreClient.getFirestore();
+            DocumentReference documentReference =dbFirestore.collection("users").document(email);
+            ApiFuture<DocumentSnapshot> future = documentReference.get();
+            DocumentSnapshot document = future.get();
 
-        User user;
+            User user;
 
-        //return the document details if it exists
-        if(document.exists()){
-            user = document.toObject(User.class);
-            return user.getName();
+            //return the document details if it exists
+            if(document.exists()){
+                user = document.toObject(User.class);
+                return user.getName();
+            }
+
+            return "user name not found";
+        }catch (Exception ex){
+            return ex.getMessage();
         }
 
-        return "user name not found";
     }
 
     //method to get the number of records in the database
-    public int countRecords() throws Exception{
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-
-        Iterable<DocumentReference> documentReference = dbFirestore.collection("covidtests").listDocuments();
-        Iterator<DocumentReference> iterator = documentReference.iterator();
-
-        List<Covidtest> covidtestList = new ArrayList<>();
-        Covidtest covidtest = null;
-
+    public int countRecords(){
         int count = 0;
 
-        while(iterator.hasNext()){
+        try{
 
-            DocumentReference documentReference1 = iterator.next();
-            ApiFuture<DocumentSnapshot> future = documentReference1.get();
-            DocumentSnapshot document = future.get();
+            Firestore dbFirestore = FirestoreClient.getFirestore();
 
-            covidtest = document.toObject(Covidtest.class);
-            numberOfRecords++;
-            covidtestList.add(covidtest);
+            Iterable<DocumentReference> documentReference = dbFirestore.collection("covidtests").listDocuments();
+            Iterator<DocumentReference> iterator = documentReference.iterator();
 
+            List<Covidtest> covidtestList = new ArrayList<>();
+            Covidtest covidtest = null;
+
+
+
+            while(iterator.hasNext()){
+
+                DocumentReference documentReference1 = iterator.next();
+                ApiFuture<DocumentSnapshot> future = documentReference1.get();
+                DocumentSnapshot document = future.get();
+
+                covidtest = document.toObject(Covidtest.class);
+                numberOfRecords++;
+                covidtestList.add(covidtest);
+            }
+            count = numberOfRecords;
+        }catch(Exception ex ){
+            System.out.println(ex);
         }
 
+
+
         return count;
+    }
+
+    public String generateTestId(){
+        int recordNumber = countRecords() + 1;
+        String result = "test_" + recordNumber;
+        return result;
     }
 }

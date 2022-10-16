@@ -1,9 +1,16 @@
 package com.work.covid19apiv2.controllers;
 
 
+import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.Firestore;
+import com.google.firebase.cloud.FirestoreClient;
 import com.work.covid19apiv2.EmailSenderService;
 import com.work.covid19apiv2.model.Covidtest;
+import com.work.covid19apiv2.model.Log;
 import com.work.covid19apiv2.service.CovidTestService;
+import com.work.covid19apiv2.service.LogService;
 import com.work.covid19apiv2.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,8 +18,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -28,22 +42,40 @@ public class CovidtestController {
     @Autowired
     EmailSenderService senderService;
 
+    public Log logActivity;
+
+    //store all logs made
+    @Autowired
+     LogService logService;
 
 //    public CovidtestController(UserService userService){
 //        this.userService = userService;
 //    }
     public CovidtestController(CovidTestService covidTestService){this.covidTestService = covidTestService;}
+//    public CovidtestController(LogService logService){this.logService = logService;}
 
 
     @Operation(summary="Get covid tests", description = "Get a list of covid tests")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Found the tests",
+            @ApiResponse(responseCode = "200", description = "data found",
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = Covidtest.class))}),
-            @ApiResponse(responseCode = "404", description = "Tests not found",
+            @ApiResponse(responseCode = "404", description = "no data found",
                     content = @Content)})
     @GetMapping("/covidtests/get-all-tests")
-    public List<Covidtest> getAllCovidTests() throws ExecutionException, InterruptedException,Exception {
-        int number  = getNumberOfRecords();
+    public ResponseEntity<?> getAllCovidTests() {
+
+        //set date and time the record was created
+        LocalDateTime created_at = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String date = created_at.format(formatter).toString();
+
+        String[] getDeviceDetails = getDeviceAndIp();
+        String logId = generateLogId();
+        System.out.println(logId);
+        logActivity = new Log(logId,"get all covid tests","successful", getDeviceDetails[0], getDeviceDetails[1], date);
+
+
+        logService.createLog(logActivity);
         return covidTestService.getAllTests();
     }
 
@@ -56,7 +88,7 @@ public class CovidtestController {
                     content = @Content)})
     @PostMapping("/covidtests/add-new-covidtest")
     //method to get temperature and email to determine covid state of user
-    public String createTest(@RequestBody Covidtest covidtest) throws InterruptedException, ExecutionException {
+    public ResponseEntity<?> createTest(@RequestBody Covidtest covidtest){
         String userEmail = covidtest.getEmail();
         covidtest.setEmail(userEmail);
 
@@ -66,6 +98,17 @@ public class CovidtestController {
         String username = covidTestService.getUsername(userEmail);
 
         sendCovidTestEmail(userEmail, username,covidtest.getCovidresult(), "Have a great day");
+
+        //set date and time the record was created
+        LocalDateTime created_at = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String date = created_at.format(formatter).toString();
+
+        String[] getDeviceDetails = getDeviceAndIp();
+        logActivity = new Log(generateLogId(),"new covid test added","successful", getDeviceDetails[0], getDeviceDetails[1], date);
+
+
+        logService.createLog(logActivity);
         return covidTestService.createCovidTest(covidtest);
     }
 
@@ -109,5 +152,61 @@ public class CovidtestController {
         System.out.println("the number of records is "+ covidTestService.countRecords());
         return covidTestService.countRecords();
     }
+
+    public String[] getDeviceAndIp(){
+        String[] result = new String[2];
+        try{
+            InetAddress ip = InetAddress.getLocalHost();
+            String ipAddress = ip.getHostAddress();
+            String device = ip.getHostName();
+
+            result[0] = device;
+            result[1] = ipAddress;
+        } catch(Exception ex){
+            ex.getMessage();
+        }
+
+        return result;
+
+    }
+
+
+    public String generateLogId(){
+        int recordNumber = 0;
+        try{
+
+            recordNumber = getNoOfRecords() + 1;
+            System.out.println("The new number is "+ recordNumber);
+
+        } catch(Exception ex){
+            ex.getMessage();
+        }
+        return "act_"+recordNumber;
+    }
+
+    public int getNoOfRecords() throws Exception {
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+
+        Iterable<DocumentReference> documentReference = dbFirestore.collection("logs").listDocuments();
+        Iterator<DocumentReference> iterator = documentReference.iterator();
+
+        List<Log> logList = new ArrayList<>();
+        Log logActivity = null;
+
+        int count = 0;
+
+        while(iterator.hasNext()){
+
+            DocumentReference documentReference1 = iterator.next();
+            ApiFuture<DocumentSnapshot> future = documentReference1.get();
+            DocumentSnapshot document = future.get();
+            logActivity = document.toObject(Log.class);
+            count++;
+            logList.add(logActivity);
+        }
+
+        return count;
+    }
+
 
 }
