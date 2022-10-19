@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.net.InetAddress;
 import java.time.LocalDateTime;
@@ -25,6 +26,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 
@@ -50,7 +52,7 @@ public class UserController {
         this.userService = userService;
     }
 
-
+    Map<String, String> locationDetails = getLocation();
 
     //add new user
     @Operation(summary="Sign Up user", description = "Adds a new user to the app")
@@ -71,7 +73,7 @@ public class UserController {
         String[] getDeviceDetails = getDeviceAndIp();
         String logId = generateLogId();
 
-        logActivity = new Log(logId,"sign up, added new user","successful", getDeviceDetails[0], getDeviceDetails[1], date);
+        logActivity = new Log(logId,"sign up, added new user","successful", getDeviceDetails[0], getDeviceDetails[1],locationDetails.get("country"), date);
         logService.createLog(logActivity);
         return userService.createUser(user);
     }
@@ -105,7 +107,7 @@ public class UserController {
         String[] getDeviceDetails = getDeviceAndIp();
         String logId = generateLogId();
 
-        logActivity = new Log(logId,"get user details","successful", getDeviceDetails[0], getDeviceDetails[1], date);
+        logActivity = new Log(logId,"get user details","successful", getDeviceDetails[0], getDeviceDetails[1],locationDetails.get("country"), date);
         logService.createLog(logActivity);
         return userService.getUser(email);
     }
@@ -126,7 +128,7 @@ public class UserController {
 
         String[] getDeviceDetails = getDeviceAndIp();
         String logId = generateLogId();
-        logActivity = new Log(logId,"get user details","successful", getDeviceDetails[0], getDeviceDetails[1], date);
+        logActivity = new Log(logId,"get user details","successful", getDeviceDetails[0], getDeviceDetails[1], locationDetails.get("country"), date);
         logService.createLog(logActivity);
 
         return userService.getAllUsers();
@@ -148,7 +150,7 @@ public class UserController {
 
         String[] getDeviceDetails = getDeviceAndIp();
         String logId = generateLogId();
-        logActivity = new Log(logId,"updated user details","successful", getDeviceDetails[0], getDeviceDetails[1], date);
+        logActivity = new Log(logId,"updated user details","successful", getDeviceDetails[0], getDeviceDetails[1], locationDetails.get("country"), date);
         logService.createLog(logActivity);
 
         return userService.updateUser(user);
@@ -170,7 +172,7 @@ public class UserController {
 
         String[] getDeviceDetails = getDeviceAndIp();
         String logId = generateLogId();
-        logActivity = new Log(logId,"user details deleted by email","successful", getDeviceDetails[0], getDeviceDetails[1], date);
+        logActivity = new Log(logId,"user details deleted by email","successful", getDeviceDetails[0], getDeviceDetails[1], locationDetails.get("country"), date);
         logService.createLog(logActivity);
 
         return userService.deleteUser(email);
@@ -265,6 +267,17 @@ public class UserController {
         }
 
         return count;
+    }
+
+    public Map getLocation(){
+        String url = "http://ip-api.com/json";
+        RestTemplate restTemplate = new RestTemplate();
+        Object locationDetails = restTemplate.getForObject(url, Object.class);
+        Object country = locationDetails.getClass();
+//        HashMap<String> locationDetails = new HashMap<String>();
+        Map<String, String> location = (Map)locationDetails;
+        String countryName = location.get("country");
+        return location;
     }
 
 }
