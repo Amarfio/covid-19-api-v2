@@ -116,9 +116,10 @@ public class CovidtestController {
         return covidTestService.createCovidTest(covidtest);
     }
 
-    @GetMapping("/alldetails")
+//    @GetMapping("/alldetails")
     public Map getLocation(){
         String url = "http://ip-api.com/json";
+
         RestTemplate restTemplate = new RestTemplate();
         Object locationDetails = restTemplate.getForObject(url, Object.class);
         Object country = locationDetails.getClass();

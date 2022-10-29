@@ -24,6 +24,9 @@ public class LogService {
         String message = "default message";
         Object data = null;
 
+    //create response
+    ApiResponse response;
+
     public void createLog(Log newLog){
         System.out.println(newLog.getId());
         try{
@@ -36,6 +39,41 @@ public class LogService {
 
         }catch (Exception ex){
             ex.getMessage();
+        }
+    }
+
+    //method to get all logs done so far
+    public ResponseEntity<ApiResponse> getAllLogs()  {
+        response = new ApiResponse(statusCode, message, data);
+
+        try{
+
+            Firestore dbFirestore = FirestoreClient.getFirestore();
+
+            Iterable<DocumentReference> documentReference = dbFirestore.collection("logs").listDocuments();
+            Iterator<DocumentReference> iterator = documentReference.iterator();
+
+            List<Log> logList = new ArrayList<>();
+            Log log = null;
+
+            while(iterator.hasNext()){
+                DocumentReference documentReference1 = iterator.next();
+                ApiFuture<DocumentSnapshot> future = documentReference1.get();
+                DocumentSnapshot document = future.get();
+
+                log = document.toObject(Log.class);
+                logList.add(log);
+            }
+
+            if(logList.size() > 0){
+                response = new ApiResponse(statusCode, message, logList);
+            }else{
+                response = new ApiResponse("404", "no data found", data);
+            }
+            return ResponseEntity.ok(response);
+        } catch(Exception ex){
+            response = new ApiResponse("404", ex.getMessage(), data);
+            return ResponseEntity.ok(response);
         }
     }
 
