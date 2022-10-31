@@ -1,7 +1,14 @@
 package com.work.covid19apiv2.controllers;
 
 import com.work.covid19apiv2.EmailSenderService;
+import com.work.covid19apiv2.model.Covidtest;
+import com.work.covid19apiv2.model.Log;
 import com.work.covid19apiv2.service.LogService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +26,13 @@ public class LogController {
     public LogController(LogService logService){
         this.logService = logService;
     }
+
+    @Operation(summary="Get application logs", description = "Get a list of logs made using the application")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "000", description = "data found",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = Log.class))}),
+            @ApiResponse(responseCode = "404", description = "no data found",
+                    content = @Content)})
     @GetMapping("/logs/get-all-logs")
     public ResponseEntity<?> getAllLogs(){
         return logService.getAllLogs();
