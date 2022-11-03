@@ -8,6 +8,8 @@ import io.swagger.v3.oas.models.info.Info;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -42,6 +44,16 @@ public class Covid19ApiV2Application {
 				.description("Covid Tester Swagger Open API that uses user's initially captured temperate to determine their basic covid status.")
 				.version("v2.0.0");
 		return info;
+	}
+
+	@Bean
+	public WebMvcConfigurer corsConfigurer(){
+		return new WebMvcConfigurer() {
+			@Override
+			public void addCorsMappings(CorsRegistry registry){
+				registry.addMapping("/**");
+			}
+		};
 	}
 
 }

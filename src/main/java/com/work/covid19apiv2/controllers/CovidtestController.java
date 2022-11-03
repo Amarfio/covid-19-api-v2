@@ -32,6 +32,7 @@ import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/covid-19/api/v2")
+@CrossOrigin("*")
 public class CovidtestController {
 
 
