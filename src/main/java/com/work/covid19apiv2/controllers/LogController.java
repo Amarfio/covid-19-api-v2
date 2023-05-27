@@ -35,7 +35,8 @@ public class LogController {
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = Log.class))}),
             @ApiResponse(responseCode = "404", description = "no data found",
                     content = @Content)})
-    @GetMapping("/logs/get-all-logs")
+//    @GetMapping("/logs/get-all-logs")
+    @GetMapping("/logs")
     public ResponseEntity<?> getAllLogs(){
         return logService.getAllLogs();
     }

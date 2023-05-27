@@ -62,7 +62,8 @@ public class UserController {
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = User.class))}),
             @ApiResponse(responseCode = "404", description = "User not successfully added",
                     content = @Content)})
-    @PostMapping("/user/sign-up")
+//    @PostMapping("/user/sign-up")
+    @PostMapping("/users")
     public ResponseEntity<?> createUser(@RequestBody User user) throws InterruptedException, ExecutionException {
 
         sendNewUserEmail(user.getEmail(), user.getName(), "Have a great day");
@@ -98,7 +99,8 @@ public class UserController {
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = User.class))}),
             @ApiResponse(responseCode = "404", description = "no data found",
                     content = @Content)})
-    @GetMapping("/user/get-user-details")
+//    @GetMapping("/user/get-user-details")
+    @GetMapping("/users/{email}")
     public ResponseEntity<?> getUser(@RequestParam String email){
         //set date and time the record was created
         LocalDateTime created_at = LocalDateTime.now();
@@ -120,7 +122,8 @@ public class UserController {
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = User.class))}),
             @ApiResponse(responseCode = "404", description = "No user add yet",
                     content = @Content)})
-    @GetMapping("/user/get-all-users")
+//    @GetMapping("/user/get-all-users")
+    @GetMapping("/users")
     public ResponseEntity<?> getUsers(){
         //set date and time the record was created
         LocalDateTime created_at = LocalDateTime.now();
@@ -141,7 +144,8 @@ public class UserController {
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = User.class))}),
             @ApiResponse(responseCode = "404", description = "Update not successful",
                     content = @Content)})
-    @PutMapping("/user/update-user-details")
+//    @PutMapping("/user/update-user-details")
+    @PutMapping("/users/update")
     public ResponseEntity<?> updateUser(@RequestBody User user) {
 
         //set date and time the record was created
@@ -164,7 +168,8 @@ public class UserController {
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = User.class))}),
             @ApiResponse(responseCode = "404", description = "User not found",
                     content = @Content)})
-    @DeleteMapping("/user/delete")
+//    @DeleteMapping("/user/delete")
+    @DeleteMapping("/users/delete")
     public ResponseEntity<?> deleteUser(@RequestParam String email){
         //set date and time the record was created
         LocalDateTime created_at = LocalDateTime.now();
@@ -186,7 +191,7 @@ public class UserController {
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = User.class))}),
             @ApiResponse(responseCode = "404", description = "Test not successful",
                     content = @Content)})
-    @GetMapping("/test-app")
+    @GetMapping("/test")
     public ResponseEntity<String> testGetEndpoint(){
         return ResponseEntity.ok("Test Get Endpoint is working");
     }

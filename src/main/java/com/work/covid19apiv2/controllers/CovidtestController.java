@@ -64,7 +64,8 @@ public class CovidtestController {
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = Covidtest.class))}),
             @ApiResponse(responseCode = "404", description = "no data found",
                     content = @Content)})
-    @GetMapping("/covidtests/get-all-tests")
+//    @GetMapping("/covidtests/get-all-tests")
+    @GetMapping("/covidtests")
     public ResponseEntity<?> getAllCovidTests() {
 
         //set date and time the record was created
@@ -89,7 +90,8 @@ public class CovidtestController {
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = Covidtest.class))}),
             @ApiResponse(responseCode = "404", description = "Test was not added successfully",
                     content = @Content)})
-    @PostMapping("/covidtests/add-new-covidtest")
+//    @PostMapping("/covidtests/add-new-covidtest")
+    @PostMapping("/covidtests")
     //method to get temperature and email to determine covid state of user
     public ResponseEntity<?> createTest(@RequestBody Covidtest covidtest){
         String userEmail = covidtest.getEmail();
